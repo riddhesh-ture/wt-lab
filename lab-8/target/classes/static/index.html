@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Cricket - Match Center & Real-Time Win Predictor</title>
+    <meta name="description" content="Professional real-time cricket score center with live win probability, ball-by-ball commentary, and full match analytics.">
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- SockJS and STOMP -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Top Professional Sports Bar -->
+    <header class="google-sports-header">
+        <div class="header-inner">
+            <div class="brand-group">
+                <div class="sports-logo">
+                    <span class="live-dot-pulse"></span>
+                    <span class="logo-text">CRICKET <strong>LIVE</strong></span>
+                </div>
+                <div class="match-meta-pill" id="headerMatchTitle">ICC Men's T20 World Cup Final</div>
+            </div>
+
+            <!-- Live Simulation Toggles (Professional & Subtle) -->
+            <div class="live-controls-bar">
+                <button class="sim-toggle-btn active" id="btnLiveAutoSim" title="Toggle Real-Time Ball-by-Ball Auto Stream">
+                    <span class="sim-dot"></span>
+                    <span id="simToggleText">LIVE STREAMING</span>
+                </button>
+                <button class="step-btn" id="btnStepNextBall" title="Advance Next Delivery Immediately">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                    Next Ball
+                </button>
+                <button class="nav-btn" id="btnHistoricModal">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Historic Records
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Top Fixtures Ticker (Google Sports Carousel) -->
+    <section class="matches-carousel-strip">
+        <div class="carousel-inner" id="matchTickerList">
+            <!-- Populated dynamically with matches -->
+        </div>
+    </section>
+
+    <!-- Main Score Center Container -->
+    <main class="sports-container">
+        <!-- Match Hero Summary Card -->
+        <section class="match-summary-card">
+            <div class="summary-meta-row">
+                <div class="series-venue">
+                    <span id="matchSeries">ICC Men's T20 World Cup</span> • <span id="matchVenue">Kensington Oval, Barbados</span> • <span id="matchFormat">T20I</span>
+                </div>
+                <div class="live-status-tag" id="matchStatusBadge">LIVE</div>
+            </div>
+
+            <!-- Teams & Big Score Display -->
+            <div class="score-grid">
+                <!-- Team 1 -->
+                <div class="team-line" id="team1Line">
+                    <div class="team-meta">
+                        <div class="team-flag" id="team1Flag">AUS</div>
+                        <span class="team-name" id="team1Name">Australia</span>
+                    </div>
+                    <div class="team-score-num" id="team1Score">186/6 <span class="overs-dim">(20.0)</span></div>
+                </div>
+
+                <!-- Team 2 -->
+                <div class="team-line active-batting" id="team2Line">
+                    <div class="team-meta">
+                        <div class="team-flag" id="team2Flag">IND</div>
+                        <span class="team-name" id="team2Name">India</span>
+                        <span class="batting-indicator">🏏 Batting</span>
+                    </div>
+                    <div class="team-score-num" id="team2Score">
+                        <span class="score-highlight" id="mainRunsWickets">175/4</span>
+                        <span class="overs-dim" id="mainOversDisplay">(18.2 / 20 ov)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status / Target String -->
+            <div class="match-equation-bar">
+                <div class="equation-text" id="matchSituationText">India need 12 runs in 10 balls</div>
+                <div class="equation-rates">
+                    <span>CRR: <strong id="crrValue">9.55</strong></span>
+                    <span class="rate-pipe">|</span>
+                    <span>REQ: <strong id="rrrValue" class="text-accent">7.20</strong></span>
+                    <span class="rate-pipe">|</span>
+                    <span>Target: <strong id="targetValue">187</strong></span>
+                </div>
+            </div>
+
+            <!-- GOOGLE WIN PROBABILITY (WIN PREDICTOR) -->
+            <div class="win-probability-section">
+                <div class="win-prob-header">
+                    <span class="win-prob-title">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg>
+                        WIN PROBABILITY
+                    </span>
+                    <span class="win-prob-subtext" id="winProbLeader">India has a 78.4% chance of winning</span>
+                </div>
+
+                <!-- Dual Segmented Progress Bar -->
+                <div class="win-prob-bar-wrapper">
+                    <div class="win-prob-bar-team1" id="winBarTeam1" style="width: 21.6%;"></div>
+                    <div class="win-prob-bar-team2" id="winBarTeam2" style="width: 78.4%;"></div>
+                </div>
+
+                <!-- Percentage Labels -->
+                <div class="win-prob-labels">
+                    <div class="prob-label left">
+                        <span class="prob-team" id="probTeam1Name">Australia</span>
+                        <span class="prob-percent" id="probTeam1Val">21.6%</span>
+                    </div>
+                    <div class="prob-label right">
+                        <span class="prob-percent highlight" id="probTeam2Val">78.4%</span>
+                        <span class="prob-team" id="probTeam2Name">India</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Over Timeline & Key Insights -->
+            <div class="over-summary-bar">
+                <div class="recent-over-block">
+                    <span class="recent-over-label">Recent Over:</span>
+                    <div class="balls-timeline" id="thisOverBalls">
+                        <!-- Ball badges inserted dynamically -->
+                    </div>
+                </div>
+                <div class="insights-block">
+                    <span class="insight-item">Partnership: <strong id="partnershipVal">34 (22)</strong></span>
+                    <span class="insight-sep">•</span>
+                    <span class="insight-item">Last 5 ovs: <strong id="last5OversVal">48/1 (9.60 RPO)</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Current Pitch Matchup Table (Google / ESPNcricinfo Style) -->
+        <section class="live-matchup-section">
+            <div class="matchup-tables-grid">
+                <!-- Batting Mini Table -->
+                <div class="table-card">
+                    <div class="table-card-header">
+                        <h4>Batters</h4>
+                        <span class="table-header-note">On Crease</span>
+                    </div>
+                    <table class="sports-table">
+                        <thead>
+                            <tr>
+                                <th>Batter</th>
+                                <th class="num">R</th>
+                                <th class="num">B</th>
+                                <th class="num">4s</th>
+                                <th class="num">6s</th>
+                                <th class="num">SR</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Striker -->
+                            <tr class="striker-row">
+                                <td class="player-name-cell">
+                                    <span class="strike-marker">*</span>
+                                    <span id="strikerName">Virat Kohli</span>
+                                </td>
+                                <td class="num bold" id="strikerRuns">72</td>
+                                <td class="num" id="strikerBalls">48</td>
+                                <td class="num" id="strikerFours">5</td>
+                                <td class="num" id="strikerSixes">3</td>
+                                <td class="num" id="strikerSr">150.0</td>
+                            </tr>
+                            <!-- Non Striker -->
+                            <tr>
+                                <td class="player-name-cell">
+                                    <span class="strike-marker empty"></span>
+                                    <span id="nonStrikerName">Hardik Pandya</span>
+                                </td>
+                                <td class="num bold" id="nonStrikerRuns">18</td>
+                                <td class="num" id="nonStrikerBalls">10</td>
+                                <td class="num" id="nonStrikerFours">1</td>
+                                <td class="num" id="nonStrikerSixes">1</td>
+                                <td class="num" id="nonStrikerSr">180.0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Bowling Mini Table -->
+                <div class="table-card">
+                    <div class="table-card-header">
+                        <h4>Bowler</h4>
+                        <span class="table-header-note">Active Spell</span>
+                    </div>
+                    <table class="sports-table">
+                        <thead>
+                            <tr>
+                                <th>Bowler</th>
+                                <th class="num">O</th>
+                                <th class="num">M</th>
+                                <th class="num">R</th>
+                                <th class="num">W</th>
+                                <th class="num">ECO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="player-name-cell">
+                                    <span class="bowling-marker">⚾</span>
+                                    <span id="bowlerName">Pat Cummins</span>
+                                </td>
+                                <td class="num" id="bowlerOvers">3.2</td>
+                                <td class="num" id="bowlerMaidens">0</td>
+                                <td class="num" id="bowlerRuns">31</td>
+                                <td class="num bold text-wicket" id="bowlerWickets">2</td>
+                                <td class="num" id="bowlerEcon">9.30</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sports Navigation Tabs (Commentary, Full Scorecard, Info) -->
+        <section class="sports-tabs-section">
+            <div class="nav-tabs-bar">
+                <button class="nav-tab-item active" data-tab="tabCommentary" id="tabBtnCommentary">Commentary</button>
+                <button class="nav-tab-item" data-tab="tabScorecard" id="tabBtnScorecard">Scorecard</button>
+                <button class="nav-tab-item" data-tab="tabMatchInfo" id="tabBtnMatchInfo">Match Details</button>
+            </div>
+
+            <!-- Tab 1: Commentary -->
+            <div class="tab-pane active" id="tabCommentary">
+                <div class="commentary-stream" id="commentaryFeed">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Tab 2: Full Scorecard -->
+            <div class="tab-pane" id="tabScorecard">
+                <div class="scorecard-container" id="scorecardContent">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Tab 3: Match Details -->
+            <div class="tab-pane" id="tabMatchInfo">
+                <div class="details-card-body" id="matchInfoContent">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Historic Matches Archive Modal -->
+    <div class="sports-modal-backdrop" id="historicModal">
+        <div class="sports-modal-box">
+            <div class="modal-top">
+                <h3>Historic International Encounters</h3>
+                <button class="modal-close-btn" id="closeHistoricModal">&times;</button>
+            </div>
+            <div class="historic-archive-feed" id="historicListContent">
+                <!-- Dynamically loaded -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

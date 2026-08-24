@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electricity Bill Calculator</title>
+    <style>
+        body{
+            margin:0;
+            font-family:Arial,sans-serif;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            background:linear-gradient(135deg,#74ebd5,#9face6);
+        }
+        .box{
+            background:#fff;
+            padding:30px;
+            border-radius:12px;
+            width:100%;
+            max-width:400px;
+            box-shadow:0 4px 10px rgba(0,0,0,0.2);
+        }
+        h2{text-align:center;}
+        input,button{
+            width:100%;
+            padding:12px;
+            margin-top:10px;
+            border-radius:6px;
+            font-size:16px;
+        }
+        button{
+            background:#4CAF50;
+            color:white;
+            border:none;
+            cursor:pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h2>Electricity Bill Calculator</h2>
+    <form action="bill" method="post">
+        <label>Enter Units Consumed</label>
+        <input type="number" name="units" min="0" required>
+        <button type="submit">Calculate Bill</button>
+    </form>
+</div>
+</body>
+</html>
